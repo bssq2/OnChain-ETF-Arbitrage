@@ -1,22 +1,27 @@
 name: CI
 
 on:
-  push: { branches: [main] }
+  push:
+    branches: [main]
   pull_request:
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    permissions: { contents: read }
+    permissions:
+      contents: read
+
     strategy:
-      matrix: { node: [20.x] }
+      matrix:
+        node-version: ["20.x"]          # ← quoted
 
     steps:
       - uses: actions/checkout@v4
 
-      # ─── Node / Hardhat ────────────────────────────────
+      # ─── Node / Hardhat ───────────────────────────────
       - uses: actions/setup-node@v4
-        with: { node-version: ${{ matrix.node }} }
+        with:
+          node-version: ${{ matrix.node-version }}   # ← multi‑line mapping
 
       - name: Install JS deps & compile
         run: |
@@ -24,18 +29,20 @@ jobs:
           npx hardhat compile
           npx hardhat test --network hardhat
 
-      # ─── Go bridge lint ────────────────────────────────
+      # ─── Go bridge lint ──────────────────────────────
       - uses: actions/setup-go@v5
-        with: { go-version: '1.22' }
+        with:
+          go-version: "1.22"
 
       - name: go vet
         run: go vet ./...
 
-      # ─── Python PCA sanity check ──────────────────────
+      # ─── Python PCA sanity check ─────────────────────
       - uses: actions/setup-python@v5
-        with: { python-version: '3.12' }
+        with:
+          python-version: "3.12"
 
       - name: Run PCA script
         run: |
-          pip install numpy pandas scikit-learn
+          pip install -r analysis/requirements.txt
           python analysis/pca_analysis.py
