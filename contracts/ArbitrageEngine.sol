@@ -1,23 +1,5 @@
----
-
-## `contracts/ArbitrageEngine.sol`
-
-```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
-
-/**
- * @title ArbitrageEngine
- * @author
- *  Samson Boicu
- *
- * @notice This contract manages the core ETF arbitrage logic:
- *   - Flash loans from Aave/Compound
- *   - On-chain bridging to IBKR orders (via Chainlink Oracle)
- *   - Cross-chain atomic swaps with synthetic assets
- *   - PCA signals from off-chain analysis
- *   - FINRA Rule 5320 compliance checks
- */
 
 import "./RegulatoryCompliance.sol";
 
@@ -33,80 +15,67 @@ interface IAaveFlashLoan {
     ) external;
 }
 
+/**
+ * @title ArbitrageEngine
+ * @author Samson Boicu
+ *
+ * @notice Core contract that orchestrates:
+ *  • Flash loans            (Aave/Compound)
+ *  • On‑chain synthetic swaps
+ *  • Off‑chain IBKR trades  (via Chainlink‑style oracle)
+ *  • Compliance logging
+ */
 contract ArbitrageEngine is RegulatoryCompliance {
-    // Events
-    event ArbitrageExecuted(
-        address indexed executor,
-        uint256 profit,
-        string tradeId
-    );
+    event ArbitrageExecuted(address indexed executor, uint256 profit, string tradeId);
+    event IBKROrderRequested(string ticker, uint256 shares, uint256 price);
 
-    event IBKROrderRequested(
-        string ticker,
-        uint256 shares,
-        uint256 price
-    );
+    address public aavePool;
+    address public oracle;
 
-    // Example state variables
-    address public aavePoolAddress;
-    address public chainlinkOracle;
-
-    constructor(address _aavePoolAddress, address _chainlinkOracle) {
-        aavePoolAddress = _aavePoolAddress;
-        chainlinkOracle = _chainlinkOracle;
+    constructor(address _aavePool, address _oracle) {
+        aavePool = _aavePool;
+        oracle   = _oracle;
     }
 
-    /**
-     * @dev Entry point for arbitrage.
-     * The recommended basket ratio from off-chain PCA can be passed in here.
-     * @param tickers Array of tickers for the basket
-     * @param targetWeights Target weighting from off-chain PCA
-     */
+    /// @param tickers  Basket constituents (e.g., ["AAPL","GOOG"])
+    /// @param weights  Target weighting from PCA (scaled, e.g., 10000 = 100%)
     function executeArbitrage(
         string[] calldata tickers,
-        uint256[] calldata targetWeights
+        uint256[] calldata weights
     ) external {
-        // 1. Check compliance (FINRA Rule 5320 etc.)
-        require(isCompliant(), "Regulatory compliance failed.");
+        require(isCompliant(), "Regulatory check failed");
 
-        // 2. Possibly initiate a flash loan from Aave/Compound
-        _initiateFlashLoan(tickers, targetWeights);
+        _flashLoan(tickers, weights);
+        _requestIBKROrder("SPY", 100, 41000);   // demo numbers
 
-        // 3. Perform trades on-chain (e.g. Uniswap for synthetic assets)
-
-        // 4. Request off-chain IBKR trade via Chainlink Oracle
-        _requestIBKROrder("SPY", 100, 41000); // Example: 100 shares at $410.00
-
-        // 5. Settlement and profit distribution
-        uint256 profit = address(this).balance; // For example
+        uint256 profit = address(this).balance;
         payable(msg.sender).transfer(profit);
 
-        emit ArbitrageExecuted(msg.sender, profit, "TRADE123");
+        emit ArbitrageExecuted(msg.sender, profit, "TRADE‑001");
     }
 
-    function _initiateFlashLoan(
+    // ──────────────────────────────────────────────────
+    // Internal helpers
+    // ──────────────────────────────────────────────────
+    function _flashLoan(
         string[] calldata tickers,
-        uint256[] calldata targetWeights
+        uint256[] calldata weights
     ) internal {
-        // Example placeholder for actual flash loan logic
         address;
-        assets[0] = address(0); // Ether placeholder
-
         uint256;
-        amounts[0] = 10 ether; // Example loan
-
         uint256;
-        modes[0] = 0; // no debt (full flash payback)
 
-        bytes memory params = abi.encode(tickers, targetWeights);
+        assets[0]  = address(0);   // ETH placeholder
+        amounts[0] = 10 ether;
+        modes[0]   = 0;            // no debt (full pay‑back)
 
-        IAaveFlashLoan(aavePoolAddress).flashLoan(
+        IAaveFlashLoan(aavePool).flashLoan(
             address(this),
             assets,
             amounts,
             modes,
             address(this),
-            params,
+            abi.encode(tickers, weights),
             0
         );
     }
@@ -116,10 +85,8 @@ contract ArbitrageEngine is RegulatoryCompliance {
         uint256 shares,
         uint256 price
     ) internal {
-        // This would send a request to an off-chain Chainlink oracle
-        // that triggers IBKR's placeOrder API
         emit IBKROrderRequested(ticker, shares, price);
-        // Implementation left as an exercise
+        // Off‑chain Chainlink job listens → calls IBKR → returns proof (future work)
     }
 
     receive() external payable {}

@@ -3,25 +3,20 @@ pragma solidity ^0.8.17;
 
 /**
  * @title RegulatoryCompliance
- * @author
- *  Samson Boicu
+ * @author Samson Boicu
  *
- * @notice Provides base compliance checks for FINRA Rule 5320 and ERC-20 log stubs.
- * In production, you'd integrate an actual compliance oracle or real-time data feed.
+ * @notice Stub for FINRA/SEC checks + audit trail.
+ *         Real implementation should query a compliance oracle.
  */
-
 abstract contract RegulatoryCompliance {
-    // Example: track last trade for front-running checks
     uint256 public lastTradeBlock;
 
-    // Example: FINRA 5320 - "Prohibition Against Trading Ahead of Customer Orders"
-    // This is a stub function where you'd implement logic to ensure no front-running
+    // FINRA Rule 5320 stub
     function isCompliant() public view returns (bool) {
-        // Placeholder: always returns true for demonstration
-        return true;
+        return true;  // always pass in demo
     }
 
-    // Example: track trades for audit
+    // Audit event — could be extended for ERC‑20 style logs
     event AuditTrail(address indexed trader, uint256 timestamp);
 
     function _logTrade() internal {
