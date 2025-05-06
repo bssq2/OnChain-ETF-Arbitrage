@@ -1,27 +1,22 @@
-cat > .gitignore <<'EOF'
-# ─── Node / Hardhat ─────────────────────────────────────
+# ───── Node / Hardhat ────────────────────────────
 node_modules/
 .npm/
 .cache/
+artifacts/
+cache/
 
-# ─── Python ─────────────────────────────────────────────
+# ───── Python ────────────────────────────────────
 __pycache__/
 *.py[cod]
 *.pyo
 
-# ─── Go ─────────────────────────────────────────────────
+# ───── Go ────────────────────────────────────────
 bin/
 *.exe
 *.test
 
-# ─── IDE / Editor files ─────────────────────────────────
+# ───── IDE / OS files ────────────────────────────
 .idea/
 .vscode/
 .DS_Store
-
-# ─── Log & build artifacts ──────────────────────────────
 *.log
-artifacts/
-cache/
-coverage/
-EOF

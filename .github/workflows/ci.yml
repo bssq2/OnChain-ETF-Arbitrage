@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push: { branches: [main] }
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions: { contents: read }
+    strategy:
+      matrix: { node: [20.x] }
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ─── Node / Hardhat ────────────────────────────────
+      - uses: actions/setup-node@v4
+        with: { node-version: ${{ matrix.node }} }
+
+      - name: Install JS deps & compile
+        run: |
+          npm ci
+          npx hardhat compile
+          npx hardhat test --network hardhat
+
+      # ─── Go bridge lint ────────────────────────────────
+      - uses: actions/setup-go@v5
+        with: { go-version: '1.22' }
+
+      - name: go vet
+        run: go vet ./...
+
+      # ─── Python PCA sanity check ──────────────────────
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+
+      - name: Run PCA script
+        run: |
+          pip install numpy pandas scikit-learn
+          python analysis/pca_analysis.py

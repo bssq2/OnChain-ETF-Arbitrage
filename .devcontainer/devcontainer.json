@@ -1,0 +1,21 @@
+{
+  "name": "OnChain-ETF-Arbitrage",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  "features": {
+    "ghcr.io/devcontainers/features/go:1":     { "version": "1.22" },
+    "ghcr.io/devcontainers/features/python:1": { "version": "3.12" }
+  },
+  "postCreateCommand": "npm ci && pip install -r analysis/requirements.txt",
+  "postStartCommand": "npx hardhat node --hostname 0.0.0.0 & echo '🚀  Hardhat JSON‑RPC 👉 http://localhost:8545'",
+  "forwardPorts": [8545],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "mhutchie.git-graph",
+        "golang.Go",
+        "ms-python.python"
+      ]
+    }
+  }
+}
