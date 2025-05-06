@@ -13,31 +13,33 @@ jobs:
 
     strategy:
       matrix:
-        node-version: ["20.x"]          # ← quoted
+        node-version: ["20.x"]
 
     steps:
+      # ── Checkout repository ───────────────────────────
       - uses: actions/checkout@v4
 
-      # ─── Node / Hardhat ───────────────────────────────
+      # ── Node / Hardhat tests ──────────────────────────
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}   # ← multi‑line mapping
+          node-version: ${{ matrix.node-version }}
 
-      - name: Install JS deps & compile
+      - name: Install JS deps & run Hardhat tests
         run: |
           npm ci
           npx hardhat compile
           npx hardhat test --network hardhat
 
-      # ─── Go bridge lint ──────────────────────────────
+      # ── Go vet inside bridge/ ─────────────────────────
       - uses: actions/setup-go@v5
         with:
           go-version: "1.22"
 
       - name: go vet
-        run: go vet ./...
+        working-directory: bridge
+        run: go vet .
 
-      # ─── Python PCA sanity check ─────────────────────
+      # ── Python PCA smoke test ─────────────────────────
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
