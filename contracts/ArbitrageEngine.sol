@@ -18,7 +18,6 @@ interface IAaveFlashLoan {
 /**
  * @title ArbitrageEngine
  * @author Samson Boicu
- *
  * @notice Demo contract showing how a flash‑loan‑based ETF arbitrage
  *         pipeline might be wired on‑chain.  NOT production ready.
  */
@@ -63,19 +62,19 @@ contract ArbitrageEngine is RegulatoryCompliance {
         uint256[] calldata weights
     ) internal {
         // single‑asset demo flash‑loan setup
-        address;
-        uint256;
-        uint256;
+        address[] memory assets  = new address[](1);
+        uint256[] memory amounts = new uint256[](1);
+        uint256[] memory modes   = new uint256[](1);
 
-        loanAssets[0]  = address(0);   // ETH placeholder
-        loanAmounts[0] = 10 ether;
-        loanModes[0]   = 0;            // 0 = no debt (instant repay)
+        assets[0]  = address(0);   // ETH placeholder
+        amounts[0] = 10 ether;
+        modes[0]   = 0;            // 0 = no debt (instant repay)
 
         IAaveFlashLoan(aavePool).flashLoan(
             address(this),
-            loanAssets,
-            loanAmounts,
-            loanModes,
+            assets,
+            amounts,
+            modes,
             address(this),
             abi.encode(tickers, weights),
             0
