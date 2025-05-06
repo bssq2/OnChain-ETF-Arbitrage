@@ -15,16 +15,6 @@ interface IAaveFlashLoan {
     ) external;
 }
 
-/**
- * @title ArbitrageEngine
- * @author Samson Boicu
- *
- * @notice Core contract that orchestrates:
- *  • Flash loans            (Aave/Compound)
- *  • On‑chain synthetic swaps
- *  • Off‑chain IBKR trades  (via Chainlink‑style oracle)
- *  • Compliance logging
- */
 contract ArbitrageEngine is RegulatoryCompliance {
     event ArbitrageExecuted(address indexed executor, uint256 profit, string tradeId);
     event IBKROrderRequested(string ticker, uint256 shares, uint256 price);
@@ -37,26 +27,22 @@ contract ArbitrageEngine is RegulatoryCompliance {
         oracle   = _oracle;
     }
 
-    /// @param tickers  Basket constituents (e.g., ["AAPL","GOOG"])
-    /// @param weights  Target weighting from PCA (scaled, e.g., 10000 = 100%)
     function executeArbitrage(
         string[] calldata tickers,
         uint256[] calldata weights
     ) external {
-        require(isCompliant(), "Regulatory check failed");
+        require(isCompliant(), "Reg check failed");
 
         _flashLoan(tickers, weights);
-        _requestIBKROrder("SPY", 100, 41000);   // demo numbers
+        _requestIBKROrder("SPY", 100, 41000);
 
         uint256 profit = address(this).balance;
         payable(msg.sender).transfer(profit);
 
-        emit ArbitrageExecuted(msg.sender, profit, "TRADE‑001");
+        emit ArbitrageExecuted(msg.sender, profit, "TRADE-001");
     }
 
-    // ──────────────────────────────────────────────────
-    // Internal helpers
-    // ──────────────────────────────────────────────────
+    // ─── helpers ────────────────────────────────────────
     function _flashLoan(
         string[] calldata tickers,
         uint256[] calldata weights
@@ -65,18 +51,13 @@ contract ArbitrageEngine is RegulatoryCompliance {
         uint256;
         uint256;
 
-        assets[0]  = address(0);   // ETH placeholder
+        assets[0]  = address(0);
         amounts[0] = 10 ether;
-        modes[0]   = 0;            // no debt (full pay‑back)
+        modes[0]   = 0;
 
         IAaveFlashLoan(aavePool).flashLoan(
-            address(this),
-            assets,
-            amounts,
-            modes,
-            address(this),
-            abi.encode(tickers, weights),
-            0
+            address(this), assets, amounts, modes,
+            address(this), abi.encode(tickers, weights), 0
         );
     }
 
@@ -86,7 +67,6 @@ contract ArbitrageEngine is RegulatoryCompliance {
         uint256 price
     ) internal {
         emit IBKROrderRequested(ticker, shares, price);
-        // Off‑chain Chainlink job listens → calls IBKR → returns proof (future work)
     }
 
     receive() external payable {}
