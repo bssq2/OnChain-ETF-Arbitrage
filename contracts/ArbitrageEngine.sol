@@ -15,6 +15,13 @@ interface IAaveFlashLoan {
     ) external;
 }
 
+/**
+ * @title ArbitrageEngine
+ * @author Samson Boicu
+ *
+ * @notice Demo contract showing how a flash‑loan‑based ETF arbitrage
+ *         pipeline might be wired on‑chain.  NOT production ready.
+ */
 contract ArbitrageEngine is RegulatoryCompliance {
     event ArbitrageExecuted(address indexed executor, uint256 profit, string tradeId);
     event IBKROrderRequested(string ticker, uint256 shares, uint256 price);
@@ -27,6 +34,11 @@ contract ArbitrageEngine is RegulatoryCompliance {
         oracle   = _oracle;
     }
 
+    /**
+     * @dev Called by a keeper/bot when mis‑pricing is detected.
+     * @param tickers  Basket constituents (e.g., ["AAPL","GOOG"]).
+     * @param weights  Target weighting (scaled, e.g., 10000 = 100%).
+     */
     function executeArbitrage(
         string[] calldata tickers,
         uint256[] calldata weights
@@ -34,7 +46,7 @@ contract ArbitrageEngine is RegulatoryCompliance {
         require(isCompliant(), "Reg check failed");
 
         _flashLoan(tickers, weights);
-        _requestIBKROrder("SPY", 100, 41000);
+        _requestIBKROrder("SPY", 100, 41000);   // demo values
 
         uint256 profit = address(this).balance;
         payable(msg.sender).transfer(profit);
@@ -45,11 +57,12 @@ contract ArbitrageEngine is RegulatoryCompliance {
     // ───────────────────────────────────────────────
     // Internal helpers
     // ───────────────────────────────────────────────
+
     function _flashLoan(
         string[] calldata tickers,
         uint256[] calldata weights
     ) internal {
-        // Local array names are unique; nothing else in the file uses them.
+        // single‑asset demo flash‑loan setup
         address;
         uint256;
         uint256;
@@ -75,7 +88,9 @@ contract ArbitrageEngine is RegulatoryCompliance {
         uint256 price
     ) internal {
         emit IBKROrderRequested(ticker, shares, price);
+        // Off‑chain Chainlink job would pick up this event
     }
 
+    /// Accept ETH profits
     receive() external payable {}
 }
